@@ -17,7 +17,7 @@ using namespace std;
 
 class Token {
 public:
-  enum Type { CADENA,  ERR, END };
+  enum Type { ID, LABEL, NUM, EOL, ERR, END };
   static const char* token_names[10]; 
   Type type;
   string lexema;
@@ -26,16 +26,15 @@ public:
   Token(Type, const string source);
 };
 
-const char* Token::token_names[10] = { "CADENA", "ERR", "END" };
+// Falta extender los token names a { ID, NUM, EOL, PUSH, JMPEQ, ..., STORE, LOAD, ERR }
+const char* Token::token_names[10] = { "ID", "LABEL", "NUM", "EOL", "ERR", "END" };
 
 Token::Token(Type type):type(type) { lexema = ""; }
 
+Token::Token(Type type, char c):type(type) { lexema = c; }
 
-Token::Token(Type type, const string source):type(type) {
-  lexema = source;
-}
+Token::Token(Type type, const string source): type(type) { lexema = source; }
 
-// Modificar
 std::ostream& operator << ( std::ostream& outs, const Token & tok )
 {
   if (tok.lexema.empty())
@@ -47,6 +46,7 @@ std::ostream& operator << ( std::ostream& outs, const Token & tok )
 std::ostream& operator << ( std::ostream& outs, const Token* tok ) {
   return outs << *tok;
 }
+
 
 
 class Scanner {
@@ -69,22 +69,45 @@ private:
 Scanner::Scanner(const char* s):input(s),first(0),current(0) { }
 
 Token* Scanner::nextToken() {
-  Token* token;
+
   char c;
-  c = nextChar();
-  while (c == ' ' || c == '\t' || c  == '\n') c = nextChar();
+  state = 0;
   startLexema();
-  if (isdigit(c) || isalpha(c)) {
-    c = nextChar();
-    while (isdigit(c) || isalpha(c)) c = nextChar();
-    rollBack();
-    return new Token(Token::CADENA,getLexema());
-  } else if (c ==  '\0') {
-    return new Token(Token::END);
-  } else {
-    return new Token(Token::ERR,getLexema());
+
+  while (1) {
+    switch (state) { 
+      case 0: c = nextChar();
+        if (c == ' ') { incrStartLexema(); state = 0; }
+        else if (isalpha(c)) { state = 1; }
+        else if (isdigit(c)) { state = 4; }
+        else if (c == '\n') { state = 6; }
+        else if (c == '\0') return new Token(Token::END);
+        else return new Token(Token::ERR, c);
+        break;
+      case 1: c = nextChar();
+        if (isalpha(c) || isdigit(c)) state = 1;
+        else if (c == ':') state = 3;
+        else state = 2;
+        break;
+      case 2: rollBack();
+        return new Token(Token::ID, getLexema());
+      case 3:
+        return new Token(Token::LABEL, getLexema());
+      case 4: c = nextChar();
+        if (isdigit(c)) state = 4;
+        else state = 5;
+        break;
+      case 5: rollBack();
+        return new Token(Token::NUM, getLexema());
+      case 6: c = nextChar();
+        if (c == '\n') state = 6;
+        else state = 7;
+        break;
+      case 7:
+        return new Token(Token::EOL);
+      default: return NULL;
+    }
   }
-  return NULL;
 }
 
 Scanner::~Scanner() { }
@@ -101,7 +124,7 @@ void Scanner::rollBack() { // retract
 }
 
 void Scanner::startLexema() {
-  first = current-1;  
+  first = current;  
   return;
 }
 
