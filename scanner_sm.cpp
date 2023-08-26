@@ -14,6 +14,7 @@ using namespace std;
 */
 
 // Incluir estructura de datos que permita la busqueda de las palabras reservadas
+// Podriamos utilizar un hash table (unordered map) key: palabra reserva value: token name
 
 class Token {
 public:
@@ -90,7 +91,7 @@ Token* Scanner::nextToken() {
         else state = 2;
         break;
       case 2: rollBack();
-        return new Token(Token::ID, getLexema());
+        return new Token(Token::ID, getLexema()); // TODO: Antes verificar si es palabra reservada
       case 3:
         return new Token(Token::LABEL, getLexema());
       case 4: c = nextChar();
