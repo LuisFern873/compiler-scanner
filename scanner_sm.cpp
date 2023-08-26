@@ -18,9 +18,9 @@ using namespace std;
 class Token {
 public:
   enum Type { 
-      ID, LABEL, NUM, EOL, ERR, END, 
-      PUSH, JMPEQ, JMPGT, JMPGE, JMPLT, JMPLE, SKIP, 
-      POP, DUP, SWAP, ADD, SUB, MUL, DIV, STORE, LOAD
+    ID, LABEL, NUM, EOL, ERR, END, 
+    PUSH, JMPEQ, JMPGT, JMPGE, JMPLT, JMPLE, SKIP, 
+    POP, DUP, SWAP, ADD, SUB, MUL, DIV, STORE, LOAD
   };
   static const char* token_names[22]; 
   Type type;
@@ -30,11 +30,11 @@ public:
   Token(Type, const string source);
 };
 
-// Falta extender los token names a { ID, NUM, EOL, PUSH, JMPEQ, ..., STORE, LOAD, ERR }
 const char* Token::token_names[22] = {
-    "ID", "LABEL", "NUM", "EOL", "ERR", "END",
-    "PUSH", "JMPEQ", "JMPGT", "JMPGE", "JMPLT", "JMPLE", "SKIP",
-    "POP", "DUP", "SWAP", "ADD", "SUB","MUL","DIV","STORE","LOAD" };
+  "ID", "LABEL", "NUM", "EOL", "ERR", "END",
+  "PUSH", "JMPEQ", "JMPGT", "JMPGE", "JMPLT", "JMPLE", "SKIP",
+  "POP", "DUP", "SWAP", "ADD", "SUB","MUL","DIV","STORE","LOAD" 
+};
 
 Token::Token(Type type):type(type) { lexema = ""; }
 
@@ -70,28 +70,25 @@ private:
   void startLexema();
   void incrStartLexema();
   string getLexema();
-  unordered_map<string,Token::Type> PalabrasReservadas = {
-      {"push", Token::PUSH},
-      {"jmpeq", Token::JMPEQ},
-      {"jmpgt", Token::JMPGT},
-      {"jmpge", Token::JMPGE},
-      {"jmplt", Token::JMPLT},
-      {"jmple", Token::JMPLE},
-      {"skip", Token::SKIP},
-      {"pop", Token::POP},
-      {"dup", Token::DUP},
-      {"swap", Token::SWAP},
-      {"add", Token::ADD},
-      {"sub", Token::SUB},
-      {"mul", Token::MUL},
-      {"div", Token::DIV},
-      {"store", Token::STORE},
-      {"load", Token::LOAD}
+  unordered_map<string,Token::Type> keywords = {
+    {"push", Token::PUSH},
+    {"jmpeq", Token::JMPEQ},
+    {"jmpgt", Token::JMPGT},
+    {"jmpge", Token::JMPGE},
+    {"jmplt", Token::JMPLT},
+    {"jmple", Token::JMPLE},
+    {"skip", Token::SKIP},
+    {"pop", Token::POP},
+    {"dup", Token::DUP},
+    {"swap", Token::SWAP},
+    {"add", Token::ADD},
+    {"sub", Token::SUB},
+    {"mul", Token::MUL},
+    {"div", Token::DIV},
+    {"store", Token::STORE},
+    {"load", Token::LOAD}
+  };
 };
-    
-  
-};
-
 
 Scanner::Scanner(const char* s):input(s),first(0),current(0) { }
 
@@ -117,13 +114,10 @@ Token* Scanner::nextToken() {
         else state = 2;
         break;
       case 2: rollBack();
-      //verificar si la palabra se encuentra
-        if(PalabrasReservadas.find(getLexema()) != PalabrasReservadas.end() ){
-            auto token_reservado= PalabrasReservadas[getLexema()];
-            //sacar la palabra, es un Token::Type
-            return new Token(token_reservado);
-        }
-        else{
+        if (keywords.find(getLexema()) != keywords.end() ){
+            auto keyword = keywords[getLexema()];
+            return new Token(keyword);
+        } else {
           return new Token(Token::ID, getLexema());
         }
       case 3:
