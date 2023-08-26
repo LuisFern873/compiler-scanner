@@ -4,7 +4,7 @@
 #include <cstring>
 #include <string>
 #include <fstream>
-
+#include <unordered_map>
 using namespace std;
 
 /*
@@ -14,12 +14,15 @@ using namespace std;
 */
 
 // Incluir estructura de datos que permita la busqueda de las palabras reservadas
-// Podriamos utilizar un hash table (unordered map) key: palabra reserva value: token name
 
 class Token {
 public:
-  enum Type { ID, LABEL, NUM, EOL, ERR, END };
-  static const char* token_names[10]; 
+  enum Type { 
+      ID, LABEL, NUM, EOL, ERR, END, 
+      PUSH, JMPEQ, JMPGT, JMPGE, JMPLT, JMPLE, SKIP, 
+      POP, DUP, SWAP, ADD, SUB, MUL, DIV, STORE, LOAD
+  };
+  static const char* token_names[22]; 
   Type type;
   string lexema;
   Token(Type);
@@ -28,7 +31,10 @@ public:
 };
 
 // Falta extender los token names a { ID, NUM, EOL, PUSH, JMPEQ, ..., STORE, LOAD, ERR }
-const char* Token::token_names[10] = { "ID", "LABEL", "NUM", "EOL", "ERR", "END" };
+const char* Token::token_names[22] = {
+    "ID", "LABEL", "NUM", "EOL", "ERR", "END",
+    "PUSH", "JMPEQ", "JMPGT", "JMPGE", "JMPLT", "JMPLE", "SKIP",
+    "POP", "DUP", "SWAP", "ADD", "SUB","MUL","DIV","STORE","LOAD" };
 
 Token::Token(Type type):type(type) { lexema = ""; }
 
@@ -64,6 +70,26 @@ private:
   void startLexema();
   void incrStartLexema();
   string getLexema();
+  unordered_map<string,Token::Type> PalabrasReservadas = {
+      {"push", Token::PUSH},
+      {"jmpeq", Token::JMPEQ},
+      {"jmpgt", Token::JMPGT},
+      {"jmpge", Token::JMPGE},
+      {"jmplt", Token::JMPLT},
+      {"jmple", Token::JMPLE},
+      {"skip", Token::SKIP},
+      {"pop", Token::POP},
+      {"dup", Token::DUP},
+      {"swap", Token::SWAP},
+      {"add", Token::ADD},
+      {"sub", Token::SUB},
+      {"mul", Token::MUL},
+      {"div", Token::DIV},
+      {"store", Token::STORE},
+      {"load", Token::LOAD}
+};
+    
+  
 };
 
 
@@ -91,7 +117,15 @@ Token* Scanner::nextToken() {
         else state = 2;
         break;
       case 2: rollBack();
-        return new Token(Token::ID, getLexema()); // TODO: Antes verificar si es palabra reservada
+      //verificar si la palabra se encuentra
+        if(PalabrasReservadas.find(getLexema()) != PalabrasReservadas.end() ){
+            auto token_reservado= PalabrasReservadas[getLexema()];
+            //sacar la palabra, es un Token::Type
+            return new Token(token_reservado);
+        }
+        else{
+          return new Token(Token::ID, getLexema());
+        }
       case 3:
         return new Token(Token::LABEL, getLexema());
       case 4: c = nextChar();
