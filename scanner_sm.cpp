@@ -9,7 +9,7 @@ using namespace std;
 
 /*
   Autores:
-  Luis Mendez (202110216)
+  Luis Méndez (202110216)
   Jean Sotomayor (202110660)
 */
 
@@ -18,11 +18,11 @@ using namespace std;
 class Token {
 public:
   enum Type { 
-    ID, LABEL, NUM, EOL, ERR, END, 
-    PUSH, JMPEQ, JMPGT, JMPGE, JMPLT, JMPLE, SKIP, 
-    POP, DUP, SWAP, ADD, SUB, MUL, DIV, STORE, LOAD
+    ID, LABEL, NUM, EOL, ERR, END, PUSH, JMPEQ, 
+    JMPGT, JMPGE, JMPLT, JMPLE, SKIP, POP, DUP, 
+    SWAP, ADD, SUB, MULT, DIV, STORE, LOAD, GOTO
   };
-  static const char* token_names[22]; 
+  static const char* token_names[23]; 
   Type type;
   string lexema;
   Token(Type);
@@ -30,10 +30,10 @@ public:
   Token(Type, const string source);
 };
 
-const char* Token::token_names[22] = {
-  "ID", "LABEL", "NUM", "EOL", "ERR", "END",
-  "PUSH", "JMPEQ", "JMPGT", "JMPGE", "JMPLT", "JMPLE", "SKIP",
-  "POP", "DUP", "SWAP", "ADD", "SUB","MUL","DIV","STORE","LOAD" 
+const char* Token::token_names[23] = {
+  "ID", "LABEL", "NUM", "EOL", "ERR", "END", "PUSH", "JMPEQ", 
+  "JMPGT", "JMPGE", "JMPLT", "JMPLE", "SKIP", "POP", "DUP", 
+  "SWAP", "ADD", "SUB", "MULT", "DIV", "STORE", "LOAD", "GOTO"
 };
 
 Token::Token(Type type):type(type) { lexema = ""; }
@@ -83,10 +83,11 @@ private:
     {"swap", Token::SWAP},
     {"add", Token::ADD},
     {"sub", Token::SUB},
-    {"mul", Token::MUL},
+    {"mult", Token::MULT},
     {"div", Token::DIV},
     {"store", Token::STORE},
-    {"load", Token::LOAD}
+    {"load", Token::LOAD},
+    {"goto", Token::GOTO}
   };
 };
 
@@ -114,14 +115,14 @@ Token* Scanner::nextToken() {
         else state = 2;
         break;
       case 2: rollBack();
-        if (keywords.find(getLexema()) != keywords.end() ){
-            auto keyword = keywords[getLexema()];
-            return new Token(keyword);
+        if (keywords.find(getLexema()) != keywords.end()) {
+            auto tokenName = keywords[getLexema()];
+            return new Token(tokenName);
         } else {
           return new Token(Token::ID, getLexema());
         }
-      case 3:
-        return new Token(Token::LABEL, getLexema());
+      case 3: 
+        return new Token(Token::LABEL, getLexema().substr(0, getLexema().length() - 1));
       case 4: c = nextChar();
         if (isdigit(c)) state = 4;
         else state = 5;
