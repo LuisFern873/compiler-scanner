@@ -133,7 +133,7 @@ Token* Scanner::nextToken() {
         if (c == '\n') state = 6;
         else state = 7;
         break;
-      case 7:
+      case 7: rollBack();
         return new Token(Token::EOL);
       default: return NULL;
     }
@@ -180,11 +180,16 @@ int main(int argc, const char* argv[]) {
     exit(1);
   }
 
-  // Cambiar:
-  // input es ahora el nombre de archivo con las instruccion de la SM
-  
+  cout << "Reading program from file " << argv[1] << endl;
+  ifstream t(argv[1]);
+  stringstream buffer;
+  buffer << t.rdbuf();
+  string content = buffer.str();
+  cout << "Content: " << endl;
+  cout << content << endl;
 
-  Scanner scanner(argv[1]);
+  cout << "Token stream: " << endl;
+  Scanner scanner(content.c_str());
   Token* tk = scanner.nextToken();
   while (tk->type != Token::END) {
     cout << "next token " << tk << endl;
